@@ -5,7 +5,7 @@ Experienced across the full lifecycle: translating stakeholder requirements into
 frameworks, and monitoring performance post-deployment. Proven ability to turn ambiguous business problems into scalable AI
 solutions used by customers and internal teams.
 
-Looking to collavorate on end-to-end ML projects and AI applications.
+Looking to collaborate on end-to-end ML projects and scalable AI applications.
 
 📫 How to reach me: let's connect https://www.linkedin.com/in/buse-bircan-profil/.
 
