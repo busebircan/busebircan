@@ -1,9 +1,13 @@
-- 👋 Hi, I’m @busebircan
-- 👀 I’m interested in business analytics, process improvement and product management. Apart from geeky stuff I'm mostly into travelling to places where historical attractions
-meet natural beauty.
-- 🌱 I’m currently learning python, powerBI, SQL, Italian and solo jazz swing dance.
-- 💞️ I’m looking to collaborate on using ML and other soft-computing techniques with python for predictive analyses and solving complex optimisation problems.
-- 📫 How to reach me: let's connect on https://www.linkedin.com/in/buse-bircan-profil/.
+AI engineer and full-stack data scientist with 5+ years' experience designing and deploying AI, ML and automation systems into real
+business workflows. I specialise in building reliable MLOps and LLM applications — including retrieval-augmented systems,
+structured decision pipelines, and automation tools — with a focus on safety, predictability, and operational integration.
+Experienced across the full lifecycle: translating stakeholder requirements into architecture, implementing guardrails and evaluation
+frameworks, and monitoring performance post-deployment. Proven ability to turn ambiguous business problems into scalable AI
+solutions used by customers and internal teams.
+
+Looking to collavorate on end-to-end ML projects and AI applications.
+
+📫 How to reach me: let's connect https://www.linkedin.com/in/buse-bircan-profil/.
 
 <!---
 busebircan/busebircan is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
