@@ -7,8 +7,6 @@ solutions used by customers and internal teams.
 
 Looking to collaborate on end-to-end ML projects and scalable AI applications.
 
-📫 How to reach me: let's connect https://www.linkedin.com/in/buse-bircan-profil/.
-
 <!---
 busebircan/busebircan is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 You can click the Preview link to take a look at your changes.
