@@ -1,4 +1,4 @@
-AI engineer and full-stack data scientist with 5+ years experience designing and deploying AI, ML and automation systems into real
+Full-stack data scientist with 5+ years experience designing and deploying AI, ML and automation systems into real
 business workflows. I specialise in building reliable MLOps and LLM applications — including retrieval-augmented systems,
 structured decision pipelines, and automation tools — with a focus on safety, predictability, and operational integration.
 Experienced across the full lifecycle: translating stakeholder requirements into architecture, implementing guardrails and evaluation
