@@ -1,8 +1,10 @@
 # MLOps Copilot: Roadmap
 
-A personal AI assistant for a **Senior Data Engineer / MLOps** role in insurance (Allianz).
-It should be able to **explain** (ML, insurance, the stack), **generate** (code, infra, pipelines),
-**operate** (run, inspect, debug, with guardrails) and **review** (code, models, compliance).
+A **personal research and learning assistant** to prepare for, and grow in, a
+**Senior Data Engineer / MLOps** role in insurance (Allianz).
+
+It teaches, explains, and builds alongside you in a **personal sandbox**, so you can then do the
+real work yourself at Allianz. It never connects to Allianz systems, data or code.
 
 > Status: planning only. Nothing here is built yet.
 
@@ -10,81 +12,84 @@ It should be able to **explain** (ML, insurance, the stack), **generate** (code,
 
 ## 1. Vision and scope
 
-| Capability | What "done" looks like |
+| Mode | What it does |
 |---|---|
-| **Expert Q&A** | Grounded, cited answers on ML fundamentals, MLOps, the tech stack and insurance ML |
-| **Builder** | Scaffolds production-grade FastAPI services, Dockerfiles, Helm charts, Terraform modules, and Azure DevOps / GitHub Actions pipelines that pass lint and tests |
-| **Operator** | Runs Python and SQL, builds images, inspects Kubernetes, runs `terraform plan`, reads CI logs. Write actions need explicit approval |
-| **Reviewer** | Reviews PRs, IaC, and model cards for bugs, security, cost, and regulatory gaps |
-| **Insurance domain expert** | Pricing, claims, fraud, reserving, churn, and the regulation that applies (EU AI Act, GDPR, Solvency II, BaFin/EIOPA) |
-| **Mentor** | Onboarding plans, study tracks, interview and design-review prep |
+| **Tutor** | Explains ML fundamentals, MLOps, the tech stack and insurance ML from first principles, with cited sources |
+| **Lab partner** | Builds and runs hands-on exercises with you in a local sandbox (Docker, `kind` cluster, Terraform, CI) and explains every step |
+| **Reviewer** | Reviews *your* code, Dockerfiles, Helm charts, Terraform and pipelines, and explains why something is wrong |
+| **Researcher** | Summarises papers, docs and regulation, and compares tools (e.g. KServe vs. Seldon, Azure ML vs. Databricks) |
+| **Coach** | Study plans, quizzes, spaced repetition, system-design drills, onboarding and 30-60-90-day plans |
 
-**Out of scope for v1:** autonomous production changes, handling real customer PII, replacing actuarial sign-off.
+**Ground rules**
+- Personal sandbox only: local machine, `kind`/`k3d`, and optionally a personal free-tier Azure account
+- Public or synthetic data only. Never paste Allianz code, data, configs or internal documents
+- **Learning first:** by default the agent explains, hints and checks your work. Full solutions only when you ask
 
 ---
 
 ## 2. Target architecture
 
 ```
-                ┌──────────────────────────────────────────────┐
-  You  ───────▶ │  Interface: CLI / VS Code / Slack/Teams / Web │
-                └──────────────────────┬───────────────────────┘
+                ┌────────────────────────────────────────────┐
+  You  ───────▶ │  Interface: Claude Code / CLI / VS Code     │
+                └──────────────────────┬─────────────────────┘
                                        ▼
-                ┌──────────────────────────────────────────────┐
-                │  Orchestrator agent (Claude Agent SDK)        │
-                │  - router: explain | build | operate | review │
-                │  - planner + tool-use loop                    │
-                │  - guardrails: approval gates, policy checks  │
-                └───┬───────────┬────────────┬────────────┬────┘
-                    ▼           ▼            ▼            ▼
-             ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌───────────┐
-             │Knowledge │ │ Skills   │ │ Tools/MCP │ │ Memory    │
-             │ (RAG)    │ │(playbooks│ │ servers   │ │ & audit   │
-             │          │ │templates)│ │           │ │ log       │
-             └──────────┘ └──────────┘ └───────────┘ └───────────┘
+                ┌────────────────────────────────────────────┐
+                │  Orchestrator agent (Claude Agent SDK)      │
+                │  - router: tutor | lab | review | research |│
+                │    coach                                   │
+                │  - teaching style: hint → explain → solve  │
+                └───┬───────────┬────────────┬───────────┬───┘
+                    ▼           ▼            ▼           ▼
+             ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌──────────────┐
+             │Knowledge │ │ Lessons &│ │ Sandbox   │ │ Learner      │
+             │ (RAG +   │ │ labs     │ │ tools     │ │ memory       │
+             │ web)     │ │ (skills) │ │ (MCP)     │ │ (progress,   │
+             │          │ │          │ │           │ │ weak spots)  │
+             └──────────┘ └──────────┘ └─────┬─────┘ └──────────────┘
                                              │
-              python · sql · docker · kubectl · helm · terraform · az devops · gh · mlflow
+                      python · sql · docker · kubectl · helm · terraform · act · mlflow
                                              │
                                ┌─────────────▼─────────────┐
-                               │ Sandbox (dev container /  │
-                               │ kind cluster / dev sub)   │
+                               │ Local sandbox: devcontainer│
+                               │ + kind cluster + Postgres │
+                               │ + MLflow + (opt.) free    │
+                               │ Azure subscription        │
                                └───────────────────────────┘
 ```
 
 **Key design decisions**
 
-- **LLM:** Claude via the Claude API / Agent SDK. Use the top-tier model for planning and review,
-  and a small fast model for routing and summarisation. **Check Allianz's AI usage policy first.**
-  If external APIs aren't allowed, use an approved enterprise channel (e.g. Claude on Microsoft
-  Foundry / Azure, AWS Bedrock or Vertex AI) so data stays inside the approved boundary.
-- **Tools as MCP servers.** One server per domain (k8s, terraform, ci, data, ml-registry) so they
-  can be reused across Claude Code, the IDE and chat.
-- **Skills as files.** Each playbook (e.g. "deploy a model to AKS") is a versioned Markdown skill
-  with templates. Easy to review and extend.
-- **Read by default, write only with approval.** Every mutating command shows a dry-run or diff
-  first.
-- **Everything runs in a sandbox** (dev container + local `kind`/`k3d` cluster + a dev Azure
-  subscription). No production credentials in v1.
+- **LLM:** Claude via the Claude API / Agent SDK. Use a top-tier model for teaching, design
+  reasoning and review, and a small fast model for quizzes and summaries.
+- **Tools as MCP servers** that work only against the sandbox. You also use them in Claude Code
+  while you study.
+- **Lessons and labs as files:** each topic is a versioned Markdown skill with an explanation,
+  an exercise, hints, a reference solution and automated checks.
+- **Learner memory:** tracks which topics you've covered, quiz scores and weak spots, so the
+  agent can adapt what comes next (spaced repetition).
+- **Safe by construction:** no corporate credentials anywhere. Destructive commands are still
+  confirmed, so you don't wipe your own lab.
 
 **Repo layout (proposed)**
 
 ```
 mlops-copilot/
-├── agent/            # orchestrator, router, prompts, guardrails
-├── mcp_servers/      # k8s, terraform, cicd, data, mlflow, docs
-├── skills/           # playbooks + templates (fastapi, docker, helm, tf, pipelines)
+├── agent/            # orchestrator, router, persona prompts, teaching style
+├── mcp_servers/      # sandbox tools: python, sql, docker, k8s, terraform, ci, mlflow, docs
+├── curriculum/       # lessons + labs (exercise, hints, solution, checks)
 ├── knowledge/        # curated sources, ingestion scripts, index config
-├── evals/            # golden Q&A, build tasks, safety tests
-├── sandbox/          # devcontainer, kind config, sample data, demo models
-├── infra/            # terraform for the copilot itself (optional)
-└── .github/ / azure-pipelines.yml
+├── projects/         # capstone projects (portfolio-ready)
+├── evals/            # golden Q&A, lab-check tests
+├── sandbox/          # devcontainer, kind config, docker-compose (Postgres, MLflow, Grafana)
+└── .github/ + azure-pipelines.yml
 ```
 
 ---
 
 ## 3. Knowledge base (what the agent must know)
 
-Curated, chunked, and indexed with source citations. Every answer cites its sources.
+Curated, chunked, and indexed with source citations. Web search covers anything newer.
 
 ### 3.1 ML fundamentals
 - Statistics & probability: distributions (Poisson, Gamma, Tweedie, Negative Binomial), MLE, Bayesian basics, hypothesis testing, bootstrap
@@ -112,11 +117,11 @@ Curated, chunked, and indexed with source citations. Every answer cites its sour
 | Area | Topics |
 |---|---|
 | **Python** | packaging (uv/poetry), typing, pytest, ruff/mypy, async, pydantic v2, performance |
-| **SQL** | Postgres, Azure SQL / Synapse, Databricks SQL, Snowflake-style patterns, optimisation |
+| **SQL** | Postgres, Azure SQL / Synapse, Databricks SQL, optimisation, query plans |
 | **Docker** | multi-stage builds, slim/distroless images, non-root, layer caching, SBOM, Trivy scans |
-| **FastAPI** | model-serving patterns, pydantic schemas, async, auth (OAuth2/Entra ID), health/readiness, OpenAPI, load testing (Locust) |
-| **Kubernetes** | Deployments, HPA/KEDA, probes, resource limits, ConfigMaps/Secrets, Helm, Kustomize, AKS, KServe/Seldon, RBAC, NetworkPolicies, debugging (`CrashLoopBackOff`, OOMKilled) |
-| **Terraform** | modules, remote state (Azure Storage), workspaces vs. directories, `azurerm` provider, policy as code (OPA / Checkov / tfsec), drift detection |
+| **FastAPI** | model-serving patterns, pydantic schemas, async, auth (OAuth2/Entra ID concepts), health/readiness, OpenAPI, load testing (Locust) |
+| **Kubernetes** | Deployments, HPA/KEDA, probes, resource limits, ConfigMaps/Secrets, Helm, Kustomize, AKS concepts, KServe/Seldon, RBAC, NetworkPolicies, debugging (`CrashLoopBackOff`, OOMKilled) |
+| **Terraform** | modules, remote state, workspaces vs. directories, `azurerm` provider, policy as code (OPA / Checkov / tfsec), drift detection |
 | **CI/CD** | Azure DevOps YAML (stages, templates, environments, approvals, service connections), GitHub Actions (reusable workflows, OIDC to Azure, environments), GitOps (Argo CD / Flux) |
 | **Azure** | AKS, ACR, Key Vault, Azure ML, Storage/ADLS, Entra ID, Managed Identity, Monitor/Log Analytics |
 
@@ -140,116 +145,110 @@ Curated, chunked, and indexed with source citations. Every answer cites its sour
 - **Gender-neutral pricing** (EU Test-Achats ruling), proxy discrimination
 - Model risk management: model inventory, validation, model cards, change management
 
-> These summaries guide design. They are not legal advice. Always confirm with Allianz Compliance and Model Risk.
+> These summaries are for learning. They are not legal advice. At work, Allianz Compliance and Model Risk have the final say.
+
+**Public datasets for practice:** `freMTPL2freq`/`freMTPL2sev` (French motor), CASdatasets (R), Kaggle insurance-fraud and churn sets, Schedule P loss triangles (CAS), synthetic data generated with SDV or Faker.
 
 ---
 
-## 4. Tooling (what the agent can do)
+## 4. Sandbox tools (what the agent can do)
 
-| MCP server | Read-only tools (v1) | Gated write tools (v2+) |
+All tools act only on the local sandbox or your personal cloud account.
+
+| MCP server | Tools |
+|---|---|
+| `python-sandbox` | run scripts/notebooks, pytest, ruff, mypy |
+| `sql` | query local Postgres/DuckDB, `EXPLAIN ANALYZE`, schema introspection |
+| `docker` | build, run, inspect, scan (Trivy), compare image sizes |
+| `k8s` | apply/get/describe/logs on the `kind` cluster, `helm template/install`, break-and-fix scenarios |
+| `terraform` | `fmt`, `validate`, `plan`, `apply` against local providers (docker, kubernetes, helm) or a personal Azure account, Checkov/tfsec |
+| `ci` | lint pipeline YAML, run GitHub Actions locally with `act`, read run logs from your personal repos |
+| `mlflow` | track experiments, compare runs, register models |
+| `docs` | RAG search over the knowledge base + web search |
+| `quiz` | generate questions, grade answers, update learner memory |
+
+**Safety (even in a personal lab):** confirm before `destroy`/`delete`, a spending cap and
+auto-teardown for any cloud resources, secrets only in a local `.env` or vault, never in prompts.
+
+---
+
+## 5. Curriculum: lessons + labs
+
+Each module = explanation → guided lab → "break it and fix it" challenge → quiz → review of your solution.
+
+| # | Module | Hands-on lab |
 |---|---|---|
-| `python-sandbox` | run scripts/notebooks, pytest, ruff, mypy | none |
-| `sql` | query dev DBs, `EXPLAIN`, schema introspection | DDL in sandbox only |
-| `docker` | build, scan (Trivy), inspect, run locally | push to dev ACR |
-| `k8s` | get/describe/logs/events, `helm template`, `kubectl diff` | apply / rollout to sandbox namespace |
-| `terraform` | `fmt`, `validate`, `plan`, Checkov/tfsec | `apply` to dev subscription |
-| `cicd` | read Azure DevOps / GH Actions runs and logs, lint YAML | trigger pipelines, open PRs |
-| `mlflow` | list experiments/runs/models, compare metrics | register / transition model stage |
-| `docs` | RAG search over the knowledge base | none |
-| `monitoring` | query Prometheus / Log Analytics, drift reports | none |
+| 1 | Python for production | Package an ML project with uv, typing, tests, pre-commit |
+| 2 | SQL & data modelling | Build a policy/claims star schema, SCD2, window-function analytics on claims |
+| 3 | ML fundamentals refresher | GLM vs. GBM on `freMTPL2`, calibration, Gini, SHAP |
+| 4 | Model → API | Serve the model with FastAPI (schemas, `/predict`, `/health`, versioning, tests, load test) |
+| 5 | Docker | Hardened multi-stage image, non-root, Trivy scan, size optimisation |
+| 6 | Kubernetes | Deploy to `kind` with Helm: probes, HPA, resources, NetworkPolicy. Debug seeded failures |
+| 7 | Terraform | Modules, state, plan/apply. Provision the `kind` workloads, then (optionally) AKS + ACR + Key Vault in a personal Azure account |
+| 8 | CI/CD | The same pipeline twice, in **GitHub Actions** and **Azure DevOps** YAML: lint → test → build → scan → push → deploy with environments and approvals |
+| 9 | ML pipelines & registry | Validate → train → evaluate → register → promote with MLflow, orchestrated by Airflow or Prefect |
+| 10 | Monitoring | Prometheus/Grafana for the API, Evidently drift reports, retraining trigger |
+| 11 | Data engineering at scale | PySpark / Delta Lake ETL, data contracts, Great Expectations |
+| 12 | Insurance ML deep-dives | Fraud detection (imbalance), churn + uplift, chain-ladder reserving, claims-document NLP |
+| 13 | Governance | Write a model card + EU AI Act-style technical documentation for your pricing model, plus a fairness audit |
+| 14 | System design | Design reviews: real-time fraud scoring, a pricing platform, a feature store, multi-team MLOps platform on AKS |
 
-**Guardrails**
-- Allow-list of commands; deny `delete`, `destroy` and prod contexts by default
-- Approval prompt with dry-run/diff before every mutation
-- Secrets only via Key Vault / env injection. Never in prompts or logs
-- PII redaction filter on all tool output before it reaches the model
-- Full audit log (prompt, tool call, result, approver)
-
----
-
-## 5. Skills (reusable playbooks + templates)
-
-1. **Model → API:** wrap a trained model in FastAPI (pydantic schemas, `/predict`, `/health`, versioning, tests)
-2. **Containerise:** hardened multi-stage Dockerfile + Trivy scan + SBOM
-3. **Deploy to K8s:** Helm chart with probes, HPA, resources, NetworkPolicy; canary via Argo Rollouts / KServe
-4. **Infra:** Terraform modules for AKS, ACR, Key Vault, Storage, Azure ML workspace, with remote state
-5. **CI/CD:** paired templates for **Azure DevOps** and **GitHub Actions**: lint → test → build → scan → push → deploy (dev → staging → prod with approvals), OIDC/workload identity
-6. **Training pipeline:** data validation → feature build → train → evaluate → register → promote (MLflow)
-7. **Monitoring:** drift + performance dashboards, alert rules, retraining triggers
-8. **Data pipeline:** SQL/PySpark ETL with tests, data contracts, SCD2
-9. **Incident runbooks:** pod crashloop, latency spike, drift alert, failed pipeline, Terraform drift
-10. **Model documentation:** model card + EU AI Act technical-documentation template + validation report
-11. **Insurance starter kits:** frequency–severity pricing (GLM vs. GBM), fraud detection, churn/uplift, chain-ladder reserving on public datasets (e.g. `freMTPL2`, CASdatasets)
-12. **Code / PR review:** checklist for Python, SQL, Docker, K8s, TF and pipelines (security, cost, reliability)
+**Capstone (portfolio project):** an end-to-end motor-pricing platform built on public data:
+GLM + GBM → FastAPI → Docker → Helm on Kubernetes → Terraform → GitHub Actions *and* Azure DevOps →
+MLflow registry → drift monitoring → model card. It mirrors the stack you'll use at Allianz.
 
 ---
 
 ## 6. Phased delivery
 
 ### Phase 0: Foundations (week 1)
-- [ ] Confirm Allianz AI/LLM usage policy and approved model access path
 - [ ] Repo skeleton, dev container, pre-commit, CI for the copilot itself
-- [ ] Choose interface (start with CLI / Claude Code + MCP. Add Teams or web later)
-- [ ] Define success metrics and the eval harness skeleton
+- [ ] Sandbox: `docker-compose` (Postgres, MLflow, Grafana) + `kind` cluster script
+- [ ] Interface: start inside Claude Code with MCP servers and skills
+- [ ] Learner-memory format (topics, scores, notes)
 
-### Phase 1: Expert Q&A, the knowledge core (weeks 2–3)
-- [ ] Curate sources: official docs (K8s, TF, FastAPI, Azure, MLflow), ML textbooks/notes, insurance ML papers, regulation texts
-- [ ] Ingestion pipeline: chunking, embeddings, vector store (pgvector / Azure AI Search), metadata and citations
-- [ ] Router + system prompts per persona (ML tutor, platform engineer, actuary-aware data scientist, compliance reviewer)
-- [ ] Eval set: ~150 golden questions across the domains. Track groundedness and accuracy
-- **Milestone:** cited, accurate answers on ML fundamentals, stack and insurance topics
+### Phase 1: Tutor (weeks 2–3)
+- [ ] Curate sources: official docs (K8s, TF, FastAPI, Azure, MLflow), ML texts, insurance ML papers, regulation texts
+- [ ] Ingestion: chunking, embeddings, vector store (pgvector or Chroma), citations
+- [ ] Personas: ML tutor, platform engineer, actuary-aware data scientist, compliance explainer
+- [ ] Teaching style: Socratic hints first, explain on request, solve on request
+- **Milestone:** cited, accurate explanations across all domains in §3
 
-### Phase 2: Builder (weeks 4–6)
-- [ ] Skills 1–5 with templates and generated tests
-- [ ] `python-sandbox`, `docker`, `terraform` (plan only), `k8s` (read + `helm template`) MCP servers
-- [ ] Self-verification loop: generate, then lint/test/plan, then fix until green
-- **Milestone:** "Deploy this sklearn model to AKS via Azure DevOps" produces a working repo that passes CI in the sandbox
+### Phase 2: Lab partner (weeks 4–7)
+- [ ] `python-sandbox`, `sql`, `docker`, `k8s`, `terraform`, `ci` MCP servers
+- [ ] Curriculum modules 1–8 with labs, hints, reference solutions and automated checks
+- [ ] "Break it and fix it" scenario generator (crashlooping pods, broken pipelines, Terraform drift)
+- **Milestone:** you complete modules 1–8 end-to-end with the agent checking your work
 
-### Phase 3: Operator (weeks 7–9)
-- [ ] Local `kind` cluster + dev Azure subscription sandbox
-- [ ] `cicd`, `mlflow`, `monitoring`, `sql` MCP servers
-- [ ] Approval-gated writes, audit log, PII redaction
-- [ ] Runbook skill (9). Log/event triage, root-cause summaries
-- **Milestone:** the agent diagnoses a broken deployment or failed pipeline and proposes a fix you can apply with one approval
+### Phase 3: ML & insurance depth (weeks 8–11)
+- [ ] `mlflow` MCP server, modules 9–13
+- [ ] Insurance labs on public datasets, fairness and explainability checks
+- [ ] Paper/regulation research mode with structured summaries
+- **Milestone:** capstone pricing model trained, explained, documented and monitored
 
-### Phase 4: Insurance domain pack (weeks 10–12)
-- [ ] Starter kits (skill 11) on public insurance datasets
-- [ ] Fairness and explainability tooling (SHAP, monotonic GBMs, proxy-discrimination checks)
-- [ ] Governance skill (10): model card + EU AI Act documentation generator
-- **Milestone:** end-to-end motor-pricing demo: GLM vs. GBM, explainability, model card, deployed and monitored
+### Phase 4: Reviewer & coach (weeks 12–14)
+- [ ] Code review mode for your repos (Python, SQL, Docker, K8s, TF, pipelines)
+- [ ] Quiz engine + spaced repetition from learner memory
+- [ ] System-design drills (module 14) and a 30-60-90-day onboarding plan for the role
+- [ ] Cert tracks if you want them: CKAD/CKA, Terraform Associate, Azure AI Engineer / DevOps Engineer
+- **Milestone:** capstone finished and published as a portfolio repo
 
-### Phase 5: Reviewer & governance (weeks 13–14)
-- [ ] PR review mode for GitHub and Azure DevOps (skill 12)
-- [ ] Policy-as-code checks (Checkov, OPA, Trivy) explained in plain language
-- [ ] Compliance review mode: flag high-risk use cases, missing documentation, data issues
-- **Milestone:** automated review comments on IaC/ML PRs with few false positives
-
-### Phase 6: Mentor & productivity (ongoing)
-- [ ] 30-60-90-day onboarding plan generator for the Allianz role
-- [ ] Spaced-repetition study tracks and quizzes (CKA/CKAD, Terraform Associate, Azure AI/DevOps certs)
-- [ ] System-design interview / design-review simulator (e.g. "design a real-time fraud scoring platform")
-- [ ] Personal memory: your team's conventions, glossary, past decisions
-
-### Phase 7: Hardening (when moving toward real use)
-- [ ] SSO (Entra ID), RBAC on tools, per-environment credentials via Managed Identity
-- [ ] Observability for the agent: traces, token cost, latency, tool error rates
-- [ ] Red-teaming: prompt injection via logs/docs, secret exfiltration, destructive commands
-- [ ] Deploy the copilot itself with its own stack (FastAPI + Docker + AKS + Terraform + pipelines), which doubles as a portfolio project
+### Phase 5: Keep current (ongoing)
+- [ ] Scheduled re-ingestion of docs and release notes
+- [ ] A weekly digest of new MLOps tooling, insurance AI news and regulation updates
+- [ ] Add modules for what you meet on the job (re-created with public or synthetic data)
 
 ---
 
-## 7. Evaluation & success metrics
+## 7. Evaluation
 
 | Dimension | Metric | Target |
 |---|---|---|
-| Knowledge | Accuracy on golden Q&A (LLM-judge + manual spot checks) | ≥ 90% |
+| Explanations | Accuracy on golden Q&A (LLM-judge + manual spot checks) | ≥ 90% |
 | Groundedness | Answers with valid citations | ≥ 95% |
-| Build | Generated projects passing lint + tests + `terraform validate` on first try / after self-fix | ≥ 70% / ≥ 95% |
-| Operate | Correct root cause on seeded incident scenarios | ≥ 80% |
-| Safety | Unapproved mutations, secrets/PII leaked | 0 |
-| Usefulness | Time saved per task, weekly usage | tracked |
-
-Evals run in CI on every prompt, skill or tool change.
+| Labs | Reference solutions passing their own automated checks | 100% |
+| Learning | Quiz scores over time, modules completed, weak topics shrinking | tracked |
+| Confidence | Self-rating per topic before vs. after | tracked |
 
 ---
 
@@ -257,28 +256,27 @@ Evals run in CI on every prompt, skill or tool change.
 
 | Risk | Mitigation |
 |---|---|
-| Corporate data / LLM policy blocks usage | Clear it in Phase 0. Use an approved enterprise model endpoint, synthetic or public data only |
-| Hallucinated commands or config | RAG with citations, self-verification (lint/plan/test), dry-runs |
-| Destructive actions | Read-only default, allow-lists, approval gates, no prod credentials |
-| Prompt injection via logs, docs or PRs | Treat tool output as data, sanitise it, restrict tool scope |
-| Stale knowledge | Scheduled re-ingestion, version-pinned docs |
-| Regulatory misstatements | Compliance pack reviewed by a human, explicit "not legal advice" |
+| Hallucinated commands or config | Citations, runs everything in the sandbox, labs auto-checked |
+| Learning by copy-paste | Hint-first teaching style, you write the code, the agent reviews it |
+| Accidentally using Allianz material | Ground rule: public or synthetic data only. Re-create work problems generically |
+| Cloud bills in the personal account | Prefer local providers, spending caps, auto-teardown |
+| Stale knowledge | Scheduled re-ingestion, version-pinned docs, web search |
+| Regulatory misstatements | Treated as learning summaries, cross-check against official texts |
 
 ---
 
 ## 9. Suggested build stack for the copilot
 
 - **Agent:** Claude Agent SDK (Python), MCP servers in Python (`mcp` SDK)
-- **RAG:** pgvector or Azure AI Search. Hybrid search (BM25 + embeddings) + reranking
-- **Sandbox:** dev container, `kind`/`k3d`, LocalStack-style mocks where needed, dev Azure subscription
-- **Evals:** pytest-based harness + LLM-as-judge + golden datasets in `evals/`
-- **Interface:** Claude Code / CLI first, then VS Code, then a Teams bot or FastAPI web UI
-- **CI:** GitHub Actions *and* an Azure DevOps mirror pipeline, so the copilot repo also demonstrates both
+- **RAG:** pgvector or Chroma, hybrid search (BM25 + embeddings) + reranking, plus web search
+- **Sandbox:** dev container, `kind`/`k3d`, docker-compose (Postgres, MLflow, Prometheus, Grafana), `act` for local GitHub Actions
+- **Evals:** pytest harness + LLM-as-judge + golden datasets in `evals/`
+- **Interface:** Claude Code / CLI first, then a small FastAPI + web UI (which is itself a practice project)
 
 ---
 
 ## 10. Next steps
 
-1. Review and adjust scope and priorities in this roadmap
-2. Check Allianz's AI usage policy and the approved model access path
-3. Start Phase 0: repo skeleton + dev container + eval harness
+1. Review and adjust the scope, curriculum order and pace in this roadmap
+2. Phase 0: repo skeleton + sandbox (`docker-compose` + `kind`)
+3. Pick the first module to build the lesson format around (suggested: module 4, Model → API)
