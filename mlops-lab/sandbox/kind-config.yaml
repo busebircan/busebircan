@@ -1,0 +1,10 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: mlops-lab
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # Expose a NodePort service on localhost:30080
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP

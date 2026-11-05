@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # The FastAPI app from module 4, running on the host with uvicorn on port 8000
+  - job_name: pricing-api
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
